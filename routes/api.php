@@ -19,6 +19,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::resources([
-    'catalog' => CatalogController::class,
+    'product' => ProductController::class,
     'category' => CategoryController::class,
 ]);
