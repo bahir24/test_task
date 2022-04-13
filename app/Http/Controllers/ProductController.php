@@ -2,51 +2,64 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ProductRequest;
+use App\Models\Product;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @param ProductRequest $productRequest
+     * @return JsonResource
      */
-    public function index()
+    public function index(ProductRequest $productRequest): JsonResource
     {
-        //
+
+        dd($productRequest);
+
+        return new JsonResource([]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param ProductRequest $productRequest
+     * @return JsonResource
      */
-    public function store(Request $request)
+    public function store(ProductRequest $productRequest): JsonResource
     {
-        //
+        (new Product($productRequest->toArray()))->save();
+
+        return new JsonResource(['result' => 'success']);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param ProductRequest $productRequest
+     * @param int $id
+     * @return JsonResource
      */
-    public function update(Request $request, $id)
+    public function update(ProductRequest $productRequest, int $id): JsonResource
     {
-        //
+        Product::findOrFail($id)
+            ->update(array_filter($productRequest->toArray(), null));
+
+        return new JsonResource(['result' => 'success']);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param int $id
+     * @return JsonResource
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResource
     {
-        //
+        Product::findOrFail($id)->delete($id);
+
+        return new JsonResource(['result' => 'success']);
     }
 }

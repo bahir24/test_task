@@ -2,19 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Filters\QueryFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use phpDocumentor\Reflection\Types\Collection;
 
 class Product extends Model
 {
-    use HasFactory;
-
     use SoftDeletes;
 
-    public function categories()
+    protected $fillable = ['name', 'price', 'active'];
+
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function scopeFilter(Builder $builder, ProductsFilter $productsFilter): Builder
+    {
+        return $productsFilter->apply($builder);
     }
 }
