@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Filters\QueryFilter;
+use App\Filters\ProductsFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

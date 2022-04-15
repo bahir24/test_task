@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CategoryRequest;
+use App\Http\Requests\Category\CreateCategoryRequest;
+use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Models\Category;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CategoryController extends Controller
@@ -11,27 +13,27 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param CategoryRequest $categoryRequest
+     * @param CreateCategoryRequest $categoryRequest
      * @return JsonResource
      */
-    public function store(CategoryRequest $categoryRequest): JsonResource
+    public function store(CreateCategoryRequest $categoryRequest): JsonResource
     {
-        (new Category($categoryRequest->toArray()))->save();
+        Category::create($categoryRequest->toArray());
 
-        return new JsonResource([]);
+        return new JsonResource(['result' => 'success']);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param CategoryRequest $categoryRequest
+     * @param UpdateCategoryRequest $updateCategoryRequest
      * @param int $id
      * @return JsonResource
      */
-    public function update(CategoryRequest $categoryRequest, int $id): JsonResource
+    public function update(UpdateCategoryRequest $updateCategoryRequest, int $id): JsonResource
     {
         Category::findOrFail($id)
-            ->update(array_filter($categoryRequest->toArray(), null));
+            ->update($updateCategoryRequest->toArray());
 
         return new JsonResource(['result' => 'success']);
     }
@@ -44,7 +46,16 @@ class CategoryController extends Controller
      */
     public function destroy(int $id): JsonResource
     {
-        Category::findOrFail($id)->delete($id);
+        try {
+            Category::findOrFail($id)->delete($id);
+        } catch (\Exception $e) {
+            throw new HttpResponseException(
+                response()->json([
+                    'success' => false,
+                    'data' => 'Category not found'
+                ])
+            );
+        }
 
         return new JsonResource(['result' => 'success']);
     }

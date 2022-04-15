@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProductRequest;
+use App\Filters\ProductsFilter;
+use App\Http\Requests\ApiRequest;
+use App\Http\Requests\Product\CreateProductRequest;
+use App\Http\Requests\Product\UpdateProductRequest;
+use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductController extends Controller
@@ -11,26 +17,28 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @param ProductRequest $productRequest
+     * @param ApiRequest $productRequest
      * @return JsonResource
      */
-    public function index(ProductRequest $productRequest): JsonResource
+    public function index(Request $request): JsonResource
     {
+        $filer = new ProductsFilter($request);
 
-        dd($productRequest);
-
-        return new JsonResource([]);
+        return new JsonResource([Product::filter($filer)->get()]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param ProductRequest $productRequest
+     * @param CreateProductRequest $createProductRequest
      * @return JsonResource
      */
-    public function store(ProductRequest $productRequest): JsonResource
+    public function store(CreateProductRequest $createProductRequest): JsonResource
     {
-        (new Product($productRequest->toArray()))->save();
+        $product = Product::create($createProductRequest->toArray());
+
+        $product->categories()
+            ->sync($createProductRequest->get('categories'));
 
         return new JsonResource(['result' => 'success']);
     }
@@ -38,14 +46,17 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param ProductRequest $productRequest
+     * @param UpdateProductRequest $updateProductRequest
      * @param int $id
      * @return JsonResource
      */
-    public function update(ProductRequest $productRequest, int $id): JsonResource
+    public function update(UpdateProductRequest $updateProductRequest, int $id): JsonResource
     {
-        Product::findOrFail($id)
-            ->update(array_filter($productRequest->toArray(), null));
+        $product = Product::withTrashed()->findOrFail($id);
+
+        $product->update($updateProductRequest->toArray());
+
+        $product->categories()->sync($updateProductRequest->get('category'));
 
         return new JsonResource(['result' => 'success']);
     }
@@ -58,7 +69,17 @@ class ProductController extends Controller
      */
     public function destroy(int $id): JsonResource
     {
-        Product::findOrFail($id)->delete($id);
+
+        try {
+            Product::findOrFail($id)->delete($id);
+        } catch (\Exception $e) {
+            throw new HttpResponseException(
+                response()->json([
+                    'success' => false,
+                    'data' => 'Product not found'
+                ])
+            );
+        }
 
         return new JsonResource(['result' => 'success']);
     }
